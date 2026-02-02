@@ -1,0 +1,1 @@
+Instant	- A specific moment on the timeline in UTC (e.g., 2025-11-15T04:00:00Z).
