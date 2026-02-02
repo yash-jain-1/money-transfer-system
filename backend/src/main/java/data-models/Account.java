@@ -1,6 +1,6 @@
 import java.time.Instant;
 
-class Account {
+public class Account {
     double id;
     String holderName;
     private float balance;
