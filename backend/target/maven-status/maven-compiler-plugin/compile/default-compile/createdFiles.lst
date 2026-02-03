@@ -1,0 +1,7 @@
+com/moneytransfer/Application.class
+com/moneytransfer/models/User.class
+com/moneytransfer/models/Account.class
+com/moneytransfer/models/User$UserBuilder.class
+com/moneytransfer/models/Transaction$TransactionBuilder.class
+com/moneytransfer/models/Transaction.class
+com/moneytransfer/models/Account$AccountBuilder.class
