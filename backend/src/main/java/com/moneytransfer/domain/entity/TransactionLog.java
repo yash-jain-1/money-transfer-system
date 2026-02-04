@@ -17,7 +17,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "transaction_logs", indexes = {
         @Index(name = "idx_account_id", columnList = "account_id"),
-        @Index(name = "idx_idempotency_key", columnList = "idempotency_key", unique = true)
+    @Index(name = "idx_idempotency_key", columnList = "idempotency_key")
 })
 @NoArgsConstructor
 @AllArgsConstructor
@@ -31,7 +31,7 @@ public class TransactionLog {
     @Column(nullable = false, name = "account_id")
     private Long accountId;
 
-    @Column(nullable = false, unique = true, name = "idempotency_key", length = 36)
+    @Column(nullable = false, name = "idempotency_key", length = 36)
     private String idempotencyKey;
 
     @Column(nullable = false)

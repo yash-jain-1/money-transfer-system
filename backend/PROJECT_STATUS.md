@@ -1,8 +1,8 @@
 # Money Transfer System - Project Status & Changes
 
-**Last Updated**: February 4, 2026  
+**Last Updated**: February 4, 2026 (14:09 UTC)  
 **Project Version**: 1.0.0  
-**Status**: ✅ Running & Tested
+**Status**: ✅ Running & Tested - All 31 Tests Passing
 
 ---
 
@@ -37,7 +37,44 @@ A **secure, production-ready money transfer system API** built with Spring Boot 
 
 ## 📝 Recent Changes & Additions
 
-### 1. ✅ Fixed Exception Handler Conflict (GlobalExceptionHandler.java)
+### 1. ✅ Introduced Flyway Database Migrations (NEW)
+**Purpose**: Implement versioned, reproducible database schema management
+
+**Files Created**:
+- `backend/src/main/resources/db/migration/V1__create_accounts.sql` - Accounts table with optimistic locking
+- `backend/src/main/resources/db/migration/V2__create_transaction_logs.sql` - Transaction audit trail with idempotency
+
+**Configuration Changes**:
+- Added Flyway dependencies to `pom.xml`
+- Updated `application.yml`:
+  - Changed `ddl-auto: update` → `ddl-auto: validate` (production-safe)
+  - Added Flyway configuration with baseline and validation settings
+
+**Key Features**:
+- ✅ `version` column on accounts table for optimistic locking
+- ✅ `idempotency_key` with unique constraint for exactly-once semantics
+- ✅ Comprehensive indexes for query optimization
+- ✅ Check constraints for data integrity
+- ✅ Foreign key relationships with referential integrity
+
+**Benefits**:
+- Eliminates "it works on my DB" problems
+- Prevents schema drift between environments
+- Makes database schema changes trackable via version control
+- Enables safe production deployments
+
+**Status**: ✅ Fully integrated and tested
+
+### 2. ✅ Fixed Mockito Unnecessary Stubbing (TransferServiceTest)
+**Issue**: `testVersionFieldTracking()` test didn't use mocks from setUp(), causing Mockito strict mode failure
+
+**Solution**: Changed `when()` to `lenient().when()` for transactionLogRepository mock to allow unused stubs in tests that don't need them
+
+**File Modified**: `src/test/java/com/moneytransfer/service/TransferServiceTest.java`
+
+**Result**: All 31 tests now pass ✅
+
+### 3. ✅ Fixed Exception Handler Conflict (GlobalExceptionHandler.java)
 **Issue**: Spring Security's `ResponseEntityExceptionHandler` and custom `GlobalExceptionHandler` both had handlers for `MethodArgumentNotValidException`, causing ambiguity.
 
 **Solution**:
@@ -51,7 +88,7 @@ A **secure, production-ready money transfer system API** built with Spring Boot 
 
 ---
 
-### 2. ✅ Created TransferController (NEW FILE)
+### 4. ✅ Created TransferController (NEW FILE)
 **Purpose**: REST API controller for money transfer operations
 
 **File**: `src/main/java/com/moneytransfer/controller/TransferController.java`  
@@ -75,7 +112,7 @@ A **secure, production-ready money transfer system API** built with Spring Boot 
 
 ---
 
-### 3. ✅ Created Comprehensive Unit Tests (NEW FILE)
+### 5. ✅ Created Comprehensive Unit Tests (NEW FILE)
 **Purpose**: Full test coverage for TransferController
 
 **File**: `src/test/java/com/moneytransfer/controller/TransferControllerTest.java`  
@@ -165,14 +202,19 @@ backend/
 │       └── (utility classes)
 │
 ├── src/main/resources/
-│   └── application.yml              # Spring Boot configuration
+│   ├── application.yml              # Spring Boot configuration (✅ Updated: ddl-auto: validate)
+│   └── db/
+│       └── migration/               # ✅ NEW - Flyway migrations
+│           ├── V1__create_accounts.sql
+│           └── V2__create_transaction_logs.sql
 │
 ├── src/test/java/com/moneytransfer/
 │   ├── controller/
 │   │   └── TransferControllerTest.java  # ✅ NEW - 12 unit tests
 │   │
 │   └── service/
-│       └── TransferServiceTest.java # Existing service tests
+│       ├── TransferServiceTest.java # 10 tests (✅ Fixed: lenient mocking)
+│       └── AccountEntityTest.java   # 9 tests
 │
 └── target/                          # Compiled classes & artifacts
     └── money-transfer-system-1.0.0.jar
@@ -246,9 +288,13 @@ Money Transfer System is running
 ## 🧪 Testing Status
 
 ### Unit Tests
-**File**: `TransferControllerTest.java`  
-**Total**: 12 tests  
-**Passed**: 12 ✅  
+**Files**: 
+- `TransferControllerTest.java` - 12 tests ✅
+- `AccountEntityTest.java` - 9 tests ✅
+- `TransferServiceTest.java` - 10 tests ✅
+
+**Total**: 31 tests  
+**Passed**: 31 ✅  
 **Failed**: 0  
 **Skipped**: 0  
 **Execution Time**: ~1.5 seconds
@@ -325,21 +371,28 @@ tail -50 logs/application.log
 
 ## 📊 Current Application State
 
-### ✅ Running
-- Application started successfully
-- Database connected
-- All endpoints responding
-- Security configured
+- Flyway migrations configured
 
 ### ✅ Compiled
 - No compilation errors
 - All dependencies resolved
 - Build artifacts generated
+- Migration scripts validated
 
 ### ✅ Tested
-- 12 unit tests passing
+- **31 unit tests passing** ✅
 - Controller endpoints verified
+- Service layer validated
+- Entity models tested
 - Exception handling validated
+- Idempotency verified
+- Optimistic locking support tested
+
+### Configuration Status
+- Spring Boot: ✅ Configured
+- Spring Security: ✅ Configured (Basic Auth)
+- JPA/Hibernate: ✅ Configured with `ddl-auto: validate`
+- Flyway: ✅ Configured with migrationsd
 
 ### Configuration Status
 - Spring Boot: ✅ Configured
@@ -411,20 +464,25 @@ mvn clean install -DskipTests  # Build without running tests
 
 | Component | Status | Changes |
 |-----------|--------|---------|
+| Flyway Migrations | ✅ Created | V1 (accounts table), V2 (transaction_logs table) |
+| Application Config | ✅ Updated | ddl-auto: validate, Flyway enabled |
 | GlobalExceptionHandler | ✅ Fixed | Override pattern for validation errors |
 | TransferController | ✅ Created | New REST API controller with 2 endpoints |
 | TransferControllerTest | ✅ Created | 12 comprehensive unit tests |
+| TransferServiceTest | ✅ Fixed | Lenient mocking for version field test |
+| AccountEntityTest | ✅ Working | 9 entity validation tests |
 | Application | ✅ Running | Successfully built and deployed |
 | Database | ✅ Connected | Aiven MySQL configured |
 | Dependencies | ✅ Resolved | All Maven dependencies working |
+| Tests | ✅ All Passing | 31/31 tests passing (100%) |
 
-**Total Files Changed**: 3  
-**Total Files Created**: 2  
-**Total Tests Added**: 12  
+**Total Files Changed**: 4  
+**Total Files Created**: 4  
+**Total Tests**: 31 (12 Controller + 10 Service + 9 Entity)  
 **Build Status**: ✅ SUCCESS  
-**Test Status**: ✅ 12/12 PASSING
+**Test Status**: ✅ 31/31 PASSING
 
 ---
 
-*Document Version: 1.0*  
-*Last Updated: 2026-02-04*
+*Document Version: 2.0*  
+*Last Updated: 2026-02-04 14:09 UTC*

@@ -17,8 +17,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.quality.Strictness;
-
 import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
@@ -220,7 +218,7 @@ class TransferServiceTest {
                 .version(1L)
                 .build();
 
-        when(transactionLogRepository.findByIdempotencyKey(anyString()))
+        lenient().when(transactionLogRepository.findByIdempotencyKey(anyString()))
                 .thenReturn(Optional.empty());
     }
 

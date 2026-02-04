@@ -62,3 +62,11 @@ logging:
 app:
   name: Money Transfer System
   version: 1.0.0
+  jwt:
+    secret: ${JWT_SECRET:change-this-secret-to-at-least-32-characters}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+    issuer: ${JWT_ISSUER:money-transfer-system}
+  security:
+    user:
+      username: ${APP_USER:app-user}
+      password: ${APP_PASSWORD:app-password}
