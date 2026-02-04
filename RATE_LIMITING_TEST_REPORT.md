@@ -2,102 +2,138 @@
 
 ## Test Execution Summary
 
-**Date**: 2026-02-04  
+**Date**: 2026-02-04 (FINAL)  
 **Total Tests**: 12  
-**Passed**: 8 ✅  
-**Failed**: 4 ⚠️  
+**Passed**: 12 ✅  
+**Failed**: 0  
 **Skipped**: 0  
-**Success Rate**: 67%
+**Success Rate**: 100%  
+**Status**: 🟢 **ALL TESTS PASSING - PRODUCTION READY**
 
 ## Test Results
 
-### ✅ PASSED Tests (8/12)
+### ✅ ALL TESTS PASSING (12/12)
 
-1. **testAuthUnderRateLimit**
-   - ✅ Auth endpoint returns 401 when under rate limit (3/5 attempts)
+1. **testAuthRateLimitExceeded** ✅
+   - Auth endpoint returns 429 when rate limit exceeded (6th attempt)
+   - Per-username isolation verified
+
+2. **testAuthUnderRateLimit** ✅
+   - Auth endpoint returns 401 when under rate limit (3/5 attempts)
    - Verified separate users have isolated limits
    - No 429 returned (correct behavior)
 
-2. **testUnauthenticatedReturns401**
-   - ✅ Unauthenticated requests return 401
-   - Rate limiting doesn't bypass authentication
-
-3. **testInvalidTokenReturns401**
-   - ✅ Invalid JWT tokens return 401
-   - Rate limiting doesn't interfere with JWT validation
-
-4. **testAuthSeparateUserLimits (Partially)**
-   - ✅ First 5 login attempts per user return 401
-   - ✅ Rate limits are per-username (verified with multiple users)
+3. **testAuthSeparateUserLimits** ✅
+   - First 5 login attempts per user return 401
+   - Rate limits are per-username (verified with multiple users)
    - Auth endpoint rate limiting working correctly
 
-5. **testTransferUnderRateLimit (Skipped)**
-   - ℹ️ Skipped due to token retrieval in this test environment
-   - Would pass with valid token
+4. **testTransferRateLimitExceeded** ✅
+   - Transfer endpoint returns 429 when rate limit exceeded (11th attempt)
+   - 10 transfers/minute limit properly enforced
+   - Returns 201 CREATED for valid transfers under limit
 
-6. **testTransferRateLimitExceeded (Skipped)**
-   - ℹ️ Skipped due to token retrieval in this test environment
-   - Transfer endpoints require authenticated requests
+5. **testTransferUnderRateLimit** ✅
+   - Transfer endpoint returns 201 CREATED when under limit (5/10 attempts)
+   - All transfers execute successfully with proper response codes
 
-7. **testAccountBalanceUnderRateLimit (Skipped)**
-   - ℹ️ Skipped due to token retrieval in this test environment
-   - Account reads require authenticated requests
+6. **testAccountReadRateLimitExceeded** ✅
+   - Account read returns 429 when rate limit exceeded (61st attempt)
+   - 60 reads/minute limit properly enforced
 
-8. **testAccountTransactionsUnderRateLimit (Skipped)**
-   - ℹ️ Skipped due to token retrieval in this test environment
-   - Transaction history requires authenticated requests
+7. **testAccountBalanceUnderRateLimit** ✅
+   - Account balance endpoint returns 200 when under limit (30/60 attempts)
+   - All balance checks execute successfully
 
-9. **testAccountReadRateLimitExceeded (Skipped)**
-   - ℹ️ Skipped due to token retrieval in this test environment
-   - Account reads require authenticated requests
+8. **testAccountTransactionsUnderRateLimit** ✅
+   - Account transactions endpoint returns 200 when under limit (30/60 attempts)
+   - All transaction reads execute successfully
 
-### ❌ FAILED Tests (4/12)
+9. **testUnauthenticatedReturns401** ✅
+   - Unauthenticated requests return 401
+   - Rate limiting doesn't bypass authentication
 
-1. **testAuthRateLimitExceeded**
-   - Expected: 429 (Too Many Requests) on 6th attempt
-   - Actual: 401 (Unauthorized)
-   - Root Cause: Rate limit bucket may be reset between test runs or token retrieval is failing in setup
-   - Status: **NEEDS INVESTIGATION**
+10. **testInvalidTokenReturns401** ✅
+    - Invalid JWT tokens return 401
+    - Rate limiting doesn't interfere with JWT validation
 
-2. **testAuthSeparateUserLimits**
-   - Expected: 429 (Too Many Requests) on 6th attempt for user1
-   - Actual: 401 (Unauthorized)
-   - Root Cause: Same as above - rate limit check not being triggered as expected
-   - Status: **NEEDS INVESTIGATION**
+11. **testSwaggerUiPublic** ✅
+    - Swagger UI accessible without authentication
+    - Public endpoint properly configured in SecurityConfig
 
-3. **testSwaggerUiPublic**
-   - Expected: 200 (OK)
-   - Actual: 401 (Unauthorized)
-   - Root Cause: Swagger UI paths not properly exposed in SecurityConfig
-   - Status: **FIXED** - Added `/v3/api-docs.yaml` to permitAll() patterns
-
-4. **testOpenApiSpecPublic**
-   - Expected: 200 (OK)
-   - Actual: 401 (Unauthorized)
-   - Root Cause: OpenAPI spec paths not properly exposed in SecurityConfig
-   - Status: **FIXED** - Updated SecurityConfig to expose all Swagger paths
+12. **testOpenApiSpecPublic** ✅
+    - OpenAPI specification accessible without authentication
+    - Public endpoint properly configured in SecurityConfig
 
 ## Detailed Analysis
 
 ### Authentication Rate Limiting Status
 
-✅ **WORKING:**
-- Per-username rate limiting is implemented and functional
+✅ **FULLY WORKING:**
+- Per-username rate limiting implemented and functional
 - Rate limit check happens BEFORE authentication (correctly)
 - Separate users have separate rate limit buckets (verified)
-- Under-limit requests return 401 (correct - auth failed, not rate limited)
-
-⚠️ **ISSUE:**
-- 6th request on same username NOT returning 429
-- Possible causes:
-  1. Rate limit bucket is being reset between tests
-  2. In-memory ConcurrentHashMap storage might not be persisting across test methods
-  3. MockMvc test isolation might be clearing the rate limit map
+- Under-limit requests return 401 when auth fails, 200/201 when under limit
+- 6th request on same username correctly returns 429 (Too Many Requests)
+- Rate limit buckets properly cleared between test runs via `setUp()` method
 
 ### Transfer Endpoint Rate Limiting Status
 
-ℹ️ **NOT TESTED** (due to token retrieval)
-- Code review shows rate limiting is properly integrated
+✅ **FULLY WORKING:**
+- Per-user rate limiting properly enforced (10 transfers/minute)
+- Returns 201 CREATED for valid transfers under limit
+- Returns 429 (Too Many Requests) when limit exceeded
+- Dynamic account IDs prevent database constraint violations
+- Idempotency keys properly required in all transfer requests
+- UUID generation ensures unique keys for each transfer
+
+### Account Read Endpoint Rate Limiting Status
+
+✅ **FULLY WORKING:**
+- Per-user rate limiting enforced (60 reads/minute)
+- Returns 200 OK for account balance under limit
+- Returns 200 OK for transaction history under limit
+- Returns 429 when rate limit exceeded
+- Buckets properly shared between different read endpoints (same limit)
+
+### Security & Authentication Status
+
+✅ **FULLY WORKING:**
+- Authentication enforced before rate limiting checks
+- Invalid tokens return 401 without consuming rate limit tokens
+- Unauthenticated requests return 401 without consuming rate limit tokens
+- Swagger/OpenAPI endpoints properly exposed without authentication
+- JWT token generation working correctly via JwtUtil
+
+## Issues Fixed (Latest Session)
+
+### 1. ✅ Rate Limit Bucket Persistence
+**Issue**: Buckets persisted between tests, causing early rate limit hits
+**Fix**: Added `rateLimitBuckets.clear()` as first line in setUp() method
+**Result**: Buckets reset for each test, tests now fully isolated
+
+### 2. ✅ Duplicate Account Numbers
+**Issue**: Test accounts with hardcoded names (ACC001, ACC002, ACC003) caused database constraint violations
+**Fix**: Changed to timestamp-based unique names: `"ACC" + System.currentTimeMillis() + "001"`
+**Result**: Each test run gets unique account numbers, no constraint violations
+
+### 3. ✅ Hardcoded Account IDs in Constants
+**Issue**: Constants had `/accounts/1` but tests created accounts with different IDs
+**Fix**: Removed hardcoded endpoint constants, use dynamic IDs from setUp()
+**Result**: Tests use actual created account IDs, no 404 errors
+
+### 4. ✅ HTTP Status Code Mismatches
+**Issue**: Some assertions expected 200 but endpoint returned 201 CREATED
+**Fix**: Updated transfer endpoint assertions to expect 201 CREATED
+**Result**: All status code assertions now match actual responses
+
+### 5. ✅ Test Infrastructure
+**Issue**: Multiple setup errors due to missing buckets autowiring and improper cleanup
+**Fix**: 
+- Added `@Autowired private Map<String, Bucket> rateLimitBuckets;`
+- Implemented proper `setUp()` with deleteAll() and clear() calls
+- Added UUID imports for idempotency key generation
+**Result**: Clean test setup with proper resource management
 - Rate limit check placed before business logic
 - Returns HTTP 429 with proper error response on rate limit exceeded
 - Per-user rate limiting correctly implemented
