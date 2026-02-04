@@ -4,6 +4,10 @@ import com.moneytransfer.config.JwtProperties;
 import com.moneytransfer.dto.request.LoginRequest;
 import com.moneytransfer.dto.response.LoginResponse;
 import com.moneytransfer.util.JwtUtil;
+import com.moneytransfer.util.RateLimitUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,14 +26,31 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Login and token management")
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final JwtProperties jwtProperties;
+    private final RateLimitUtil rateLimitUtil;
 
     @PostMapping("/login")
+    @Operation(summary = "Login with credentials", description = "Authenticate user and receive JWT token")
+    @ApiResponse(responseCode = "200", description = "Login successful, JWT token returned")
+    @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    @ApiResponse(responseCode = "429", description = "Too many login attempts - rate limit exceeded")
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        // Rate limit: 5 login attempts per minute per user
+        if (!rateLimitUtil.allowAuth(request.getUsername())) {
+            log.warn("Login rate limit exceeded for user: {}", request.getUsername());
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(LoginResponse.builder()
+                            .token(null)
+                            .tokenType("error")
+                            .expiresIn(-1)
+                            .build());
+        }
+        
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
