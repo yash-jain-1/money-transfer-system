@@ -1,3 +1,4 @@
 .env
 backend/logs/application.log
 .git-backup-*
+target/
