@@ -14,29 +14,35 @@
 ## 🔐 How to Use Swagger UI with JWT
 
 ### 1️⃣ Open Swagger UI
+
 ```
 http://localhost:8080/api/v1/swagger-ui/index.html
 ```
 
 ### 2️⃣ Get JWT Token
+
 - Expand **"Authentication"** section
 - Click **"Try it out"** on `/auth/login` endpoint
 - Enter credentials in request body:
+
   ```json
   {
     "username": "app-user",
     "password": "app-password"
   }
   ```
+
 - Click **"Execute"**
 - Copy the `token` value from response
 
 ### 3️⃣ Authorize for Protected Endpoints
+
 - Click the 🔒 **"Authorize"** button (top-right)
 - Paste token value (without "Bearer " prefix)
 - Click **"Authorize"** → **"Close"**
 
 ### 4️⃣ Call Protected Endpoints
+
 - All endpoints under **"Transfers"** and **"Accounts"** now work
 - Token is automatically included in Authorization header
 - Try **"Try it out"** → **"Execute"**
@@ -46,6 +52,7 @@ http://localhost:8080/api/v1/swagger-ui/index.html
 ## 💻 Command Line Usage
 
 ### Get Token
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
@@ -56,6 +63,7 @@ curl -X POST http://localhost:8080/api/v1/auth/login \
 ```
 
 ### Use Token (Example: Get Account)
+
 ```bash
 TOKEN="<paste-token-here>"
 
@@ -64,6 +72,7 @@ curl -X GET http://localhost:8080/api/v1/accounts/1 \
 ```
 
 ### Check API Docs
+
 ```bash
 curl http://localhost:8080/api/v1/v3/api-docs | jq
 ```
@@ -73,22 +82,34 @@ curl http://localhost:8080/api/v1/v3/api-docs | jq
 ## 🏷️ Endpoint Categories
 
 ### 🔑 Authentication (Public)
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/auth/login` | Get JWT token |
 
 ### 💸 Transfers (Protected)
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/transfers` | Initiate money transfer |
 | GET | `/transfers/health` | Health check |
 
 ### 💰 Accounts (Protected)
+
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/accounts/{accountId}` | Get account details |
 | GET | `/accounts/{accountId}/balance` | Get current balance |
 | GET | `/accounts/{accountId}/transactions` | Get transaction history |
+
+### 👨‍💼 Admin (Protected - ADMIN role required)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admin/accounts/{accountId}` | Get any account details |
+| GET | `/admin/accounts/{accountId}/balance` | Get any account balance |
+| GET | `/admin/accounts/{accountId}/transactions` | Get any account transaction history |
+| GET | `/admin/health` | Admin system health check |
 
 ---
 
@@ -96,7 +117,8 @@ curl http://localhost:8080/api/v1/v3/api-docs | jq
 
 **Authentication Type**: HTTP Bearer (JWT)
 
-**Token Format**: 
+**Token Format**:
+
 ```
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 ```
@@ -104,6 +126,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiJ9...
 **Token Expiration**: 1 hour (configurable via `JWT_EXPIRATION_MS`)
 
 **Error Response** (without valid token):
+
 ```
 HTTP 401 Unauthorized
 ```
@@ -113,6 +136,7 @@ HTTP 401 Unauthorized
 ## 🛠️ Configuration
 
 ### Environment Variables
+
 ```bash
 JWT_SECRET=your-secret-key-min-32-chars
 JWT_EXPIRATION_MS=3600000  # 1 hour
@@ -121,7 +145,9 @@ APP_PASSWORD=app-password
 ```
 
 ### Application Properties
+
 File: `backend/src/main/resources/application.yml`
+
 ```yaml
 server.servlet.context-path: /api/v1
 app.jwt.expiration-ms: 3600000
@@ -145,6 +171,7 @@ app.security.user.password: app-password
 ## 📋 API Response Examples
 
 ### 200 OK - Account Details
+
 ```json
 {
   "id": 1,
@@ -159,6 +186,7 @@ app.security.user.password: app-password
 ```
 
 ### 200 OK - Login Success
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
@@ -168,6 +196,7 @@ app.security.user.password: app-password
 ```
 
 ### 401 Unauthorized
+
 ```json
 {
   "status": 401,
@@ -208,15 +237,18 @@ curl -X GET "http://localhost:8080/api/v1/accounts/1" \
 ## ❓ Common Issues
 
 ### "401 Unauthorized" on Protected Endpoint
+
 - ✅ Ensure token is in `Authorization: Bearer <token>` format
 - ✅ Check token hasn't expired (default: 1 hour)
 - ✅ Verify credentials are correct
 
 ### Swagger UI shows endpoints but no descriptions
+
 - ✅ Refresh browser (Ctrl+F5 or Cmd+Shift+R)
 - ✅ Check API docs endpoint: `/api/v1/v3/api-docs`
 
 ### Can't paste token in Swagger UI
+
 - ✅ Click the 🔒 **"Authorize"** button
 - ✅ Paste token **WITHOUT** "Bearer " prefix
 - ✅ Click **"Authorize"** button in dialog
