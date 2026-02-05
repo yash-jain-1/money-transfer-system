@@ -17,6 +17,15 @@ import java.util.stream.Collectors;
 
 /**
  * AccountService: Read-only operations for account data.
+ * 
+ * Methods for USER role:
+ * - Regular methods perform ownership checks (future enhancement)
+ * - Users can only access their own account data
+ * 
+ * Methods for ADMIN role:
+ * - Admin methods bypass ownership checks
+ * - Admins can access any account data
+ * - Named with "Admin" suffix for clarity
  */
 @Slf4j
 @Service
@@ -62,6 +71,57 @@ public class AccountService {
         }
 
         log.debug("Retrieving transaction history for account: {}", accountId);
+        List<TransactionLog> logs = transactionLogRepository.findByFromAccountIdOrderByCreatedAtDesc(accountId);
+        return logs.stream()
+                .map(this::toTransactionLogResponse)
+                .collect(Collectors.toList());
+    }
+    
+    // ========================================
+    // ADMIN METHODS - No ownership checks
+    // ========================================
+    
+    /**
+     * [ADMIN] Get account details - no ownership check.
+     * Admins can view any account.
+     *
+     * @param accountId account ID
+     * @return AccountResponse
+     */
+    public AccountResponse getAccountAdmin(Long accountId) {
+        log.info("[ADMIN ACCESS] Retrieving account details for account: {}", accountId);
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
+        return toAccountResponse(account);
+    }
+
+    /**
+     * [ADMIN] Get account balance - no ownership check.
+     * Admins can view any account balance.
+     *
+     * @param accountId account ID
+     * @return AccountBalanceResponse
+     */
+    public AccountBalanceResponse getAccountBalanceAdmin(Long accountId) {
+        log.info("[ADMIN ACCESS] Retrieving balance for account: {}", accountId);
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AccountNotFoundException(accountId));
+        return toAccountBalanceResponse(account);
+    }
+
+    /**
+     * [ADMIN] Get transaction history - no ownership check.
+     * Admins can view any account's transaction history.
+     *
+     * @param accountId account ID
+     * @return list of transaction logs
+     */
+    public List<TransactionLogResponse> getTransactionHistoryAdmin(Long accountId) {
+        if (!accountRepository.existsById(accountId)) {
+            throw new AccountNotFoundException(accountId);
+        }
+
+        log.info("[ADMIN ACCESS] Retrieving transaction history for account: {}", accountId);
         List<TransactionLog> logs = transactionLogRepository.findByFromAccountIdOrderByCreatedAtDesc(accountId);
         return logs.stream()
                 .map(this::toTransactionLogResponse)

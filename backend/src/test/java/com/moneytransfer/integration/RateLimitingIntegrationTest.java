@@ -139,7 +139,7 @@ class RateLimitingIntegrationTest {
     // Helper method to get a valid token
     private String getValidToken() {
         // Generate a token directly using JwtUtil for testing
-        return jwtUtil.generateToken(securityUserProperties.getUsername());
+        return jwtUtil.generateToken(securityUserProperties.getUsername(), "USER");
     }
 
     // ==================== AUTH ENDPOINT RATE LIMITING ====================

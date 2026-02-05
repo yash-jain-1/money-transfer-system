@@ -22,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @RestController
 @RequestMapping("/auth")
@@ -55,7 +58,12 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
-            String token = jwtUtil.generateToken(authentication.getName());
+            // Extract roles from authentication and include in JWT
+            List<String> roles = authentication.getAuthorities().stream()
+                    .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                    .collect(Collectors.toList());
+            
+            String token = jwtUtil.generateToken(authentication.getName(), roles);
 
             LoginResponse response = LoginResponse.builder()
                     .token(token)

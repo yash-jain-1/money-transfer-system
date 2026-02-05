@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity // Enable @PreAuthorize and other method security annotations
 @RequiredArgsConstructor
 @EnableConfigurationProperties({JwtProperties.class, SecurityUserProperties.class})
 public class SecurityConfig {
@@ -38,6 +40,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints - no authentication required
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
@@ -46,6 +49,9 @@ public class SecurityConfig {
                                 "/v3/api-docs.yaml",
                                 "/auth/login"
                         ).permitAll()
+                        // Admin-only endpoints - ADMIN role required
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // All other API endpoints - authenticated users (USER or ADMIN)
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .httpBasic(httpBasic -> httpBasic.disable())
@@ -53,17 +59,32 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
-        return new JwtAuthenticationFilter(jwtUtil, userDetailsService);
+    public JwtAuthenticationFilter jwtAuthenticationFilter(JwtUtil jwtUtil) {
+        return new JwtAuthenticationFilter(jwtUtil);
     }
 
+    /**
+     * UserDetailsService with hardcoded users for demonstration.
+     * 
+     * In production, this would be replaced with database-backed user storage.
+     * 
+     * Users:
+     * - testuser: USER role - can access normal API endpoints
+     * - admin: ADMIN role - can access admin endpoints
+     */
     @Bean
     public UserDetailsService userDetailsService(PasswordEncoder passwordEncoder) {
-        UserDetails user = User.withUsername(securityUserProperties.getUsername())
+        UserDetails regularUser = User.withUsername(securityUserProperties.getUsername())
                 .password(passwordEncoder.encode(securityUserProperties.getPassword()))
                 .roles("USER")
                 .build();
-        return new InMemoryUserDetailsManager(user);
+        
+        UserDetails adminUser = User.withUsername("admin")
+                .password(passwordEncoder.encode("admin123")) // In production: use secure password from properties
+                .roles("ADMIN")
+                .build();
+        
+        return new InMemoryUserDetailsManager(regularUser, adminUser);
     }
 
     @Bean

@@ -22,6 +22,7 @@ com/moneytransfer/domain/entity/TransactionLog$TransactionLogBuilder.class
 com/moneytransfer/domain/exception/InsufficientBalanceException.class
 com/moneytransfer/domain/status/TransactionStatus.class
 com/moneytransfer/dto/response/TransactionLogResponse.class
+com/moneytransfer/domain/Role.class
 com/moneytransfer/config/RateLimitConfig.class
 com/moneytransfer/dto/response/LoginResponse.class
 com/moneytransfer/domain/exception/DuplicateTransferException.class
@@ -42,4 +43,5 @@ com/moneytransfer/repository/AccountRepository.class
 com/moneytransfer/dto/request/LoginRequest.class
 com/moneytransfer/controller/AccountController.class
 com/moneytransfer/config/SecurityConfig.class
+com/moneytransfer/controller/AdminController.class
 com/moneytransfer/dto/request/TransferRequest$TransferRequestBuilder.class
