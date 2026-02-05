@@ -7,6 +7,8 @@ import com.moneytransfer.domain.exception.InsufficientBalanceException;
 import com.moneytransfer.dto.request.TransferRequest;
 import com.moneytransfer.dto.response.TransferResponse;
 import com.moneytransfer.service.TransferService;
+import com.moneytransfer.util.RateLimitUtil;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -24,9 +29,8 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
  * Unit tests for TransferController.
@@ -45,6 +49,15 @@ class TransferControllerTest {
     @Mock
     private TransferService transferService;
 
+    @Mock
+    private RateLimitUtil rateLimitUtil;
+
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
     @InjectMocks
     private TransferController transferController;
 
@@ -53,6 +66,19 @@ class TransferControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(transferController).build();
+        
+        // Mock security context for rate limiting (lenient for tests that don't call initiateTransfer)
+        lenient().when(authentication.getName()).thenReturn("testUser");
+        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        
+        // Mock rate limiter to always allow transfers (lenient for tests that don't call initiateTransfer)
+        lenient().when(rateLimitUtil.allowTransfer(anyString())).thenReturn(true);
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     // ============ SUCCESS CASES ============

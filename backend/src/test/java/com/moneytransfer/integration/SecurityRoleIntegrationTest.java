@@ -4,6 +4,7 @@ import com.moneytransfer.Application;
 import com.moneytransfer.domain.entity.Account;
 import com.moneytransfer.domain.status.AccountStatus;
 import com.moneytransfer.repository.AccountRepository;
+import com.moneytransfer.repository.TransactionLogRepository;
 import com.moneytransfer.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -54,6 +55,9 @@ public class SecurityRoleIntegrationTest {
     
     @Autowired
     private AccountRepository accountRepository;
+    
+    @Autowired
+    private TransactionLogRepository transactionLogRepository;
 
     // Test account IDs (set up in @BeforeEach)
     private Long ACCOUNT_1;
@@ -61,7 +65,8 @@ public class SecurityRoleIntegrationTest {
     
     @BeforeEach
     void setUp() {
-        // Clean up any existing test data
+        // Clean up any existing test data - delete transaction logs first due to FK constraints
+        transactionLogRepository.deleteAll();
         accountRepository.deleteAll();
         
         // Create test account 1
