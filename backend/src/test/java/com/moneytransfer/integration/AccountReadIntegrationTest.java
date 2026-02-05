@@ -131,7 +131,7 @@ class AccountReadIntegrationTest {
         mockMvc.perform(get("/accounts/{accountId}/transactions", source.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].accountId").value(source.getId()))
+                .andExpect(jsonPath("$[0].fromAccountId").value(source.getId()))
                 .andExpect(jsonPath("$[0].transactionType").value("DEBIT"))
                 .andExpect(jsonPath("$[0].amount").value(100.00));
     }

@@ -16,7 +16,7 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "transaction_logs", indexes = {
-        @Index(name = "idx_account_id", columnList = "account_id"),
+        @Index(name = "idx_from_account_id", columnList = "from_account_id"),
     @Index(name = "idx_idempotency_key", columnList = "idempotency_key")
 })
 @NoArgsConstructor
@@ -28,8 +28,8 @@ public class TransactionLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, name = "account_id")
-    private Long accountId;
+    @Column(nullable = false, name = "from_account_id")
+    private Long fromAccountId;
 
     @Column(nullable = false, name = "idempotency_key", length = 36)
     private String idempotencyKey;
@@ -52,8 +52,8 @@ public class TransactionLog {
     @Column(nullable = false)
     private String description;
 
-    @Column(name = "related_transaction_id")
-    private Long relatedTransactionId;
+    @Column(name = "to_account_id")
+    private Long toAccountId;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -74,8 +74,8 @@ public class TransactionLog {
         return id;
     }
 
-    public Long getAccountId() {
-        return accountId;
+    public Long getFromAccountId() {
+        return fromAccountId;
     }
 
     public String getIdempotencyKey() {
@@ -106,8 +106,8 @@ public class TransactionLog {
         return description;
     }
 
-    public Long getRelatedTransactionId() {
-        return relatedTransactionId;
+    public Long getToAccountId() {
+        return toAccountId;
     }
 
     public LocalDateTime getCreatedAt() {

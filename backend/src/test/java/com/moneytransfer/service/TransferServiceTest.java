@@ -272,7 +272,8 @@ class TransferServiceTest {
         // Simulate cached transaction
         TransactionLog cachedTxn = TransactionLog.builder()
                 .id(100L)
-                .accountId(1L)
+                .fromAccountId(1L)
+                .toAccountId(2L)
                 .idempotencyKey(idempotencyKey)
                 .transactionType("DEBIT")
                 .amount(TRANSFER_AMOUNT)

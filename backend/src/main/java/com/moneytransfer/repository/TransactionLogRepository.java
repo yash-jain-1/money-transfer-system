@@ -34,21 +34,20 @@ public interface TransactionLogRepository extends JpaRepository<TransactionLog, 
      * Find all transactions for a specific account.
      * Useful for generating account statements and audit trails.
      *
-     * @param accountId the account ID
+    * @param fromAccountId the account ID this log belongs to
      * @return list of transactions for the account, ordered by creation time descending
      */
-    @Query("SELECT t FROM TransactionLog t WHERE t.accountId = :accountId ORDER BY t.createdAt DESC")
-    List<TransactionLog> findByAccountIdOrderByCreatedAtDesc(@Param("accountId") Long accountId);
+    @Query("SELECT t FROM TransactionLog t WHERE t.fromAccountId = :fromAccountId ORDER BY t.createdAt DESC")
+    List<TransactionLog> findByFromAccountIdOrderByCreatedAtDesc(@Param("fromAccountId") Long fromAccountId);
 
     /**
-     * Find related transactions (e.g., debit/credit pair for a transfer).
-     * Used to correlate related transactions in the audit trail.
-     *
-     * @param relatedTransactionId the ID of the related transaction
-     * @return list of transactions that reference this transaction
+    * Find transactions by counterparty account.
+    *
+    * @param toAccountId the counterparty account ID
+    * @return list of transactions that reference this counterparty
      */
-    @Query("SELECT t FROM TransactionLog t WHERE t.relatedTransactionId = :relatedTransactionId ORDER BY t.createdAt DESC")
-    List<TransactionLog> findByRelatedTransactionId(@Param("relatedTransactionId") Long relatedTransactionId);
+    @Query("SELECT t FROM TransactionLog t WHERE t.toAccountId = :toAccountId ORDER BY t.createdAt DESC")
+    List<TransactionLog> findByToAccountId(@Param("toAccountId") Long toAccountId);
 
     /**
      * Check if an idempotency key has already been processed.

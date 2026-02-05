@@ -19,7 +19,7 @@ public class TransactionLogResponse {
 
     private Long id;
 
-    private Long accountId;
+    private Long fromAccountId;
 
     private String idempotencyKey;
 
@@ -35,7 +35,7 @@ public class TransactionLogResponse {
 
     private String description;
 
-    private Long relatedTransactionId;
+    private Long toAccountId;
 
     private LocalDateTime createdAt;
 }

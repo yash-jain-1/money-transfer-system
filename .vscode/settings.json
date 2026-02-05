@@ -1,4 +1,10 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "chat.tools.terminal.autoApprove": {
+        "/^set -a && source backend/\\.env && set \\+a && mvn -f backend/pom\\.xml spring-boot:run$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

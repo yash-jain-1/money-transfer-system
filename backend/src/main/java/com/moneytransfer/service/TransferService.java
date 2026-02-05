@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 /**
  * TransferService: Core service for executing money transfers.
@@ -89,7 +88,7 @@ public class TransferService {
                     request.getIdempotencyKey());
             
             TransactionLog txn = existingTransaction.get();
-            return buildTransferResponse(txn.getAccountId(), 
+                return buildTransferResponse(request.getSourceAccountId(), 
                     request.getDestinationAccountId(), txn);
         }
 
@@ -136,7 +135,8 @@ public class TransferService {
         // The debit and credit transactions share the same idempotency key
         // This allows finding all related transactions by key
         TransactionLog debitLog = TransactionLog.builder()
-                .accountId(sourceAccount.getId())
+            .fromAccountId(sourceAccount.getId())
+            .toAccountId(destinationAccount.getId())
                 .idempotencyKey(request.getIdempotencyKey())
                 .transactionType("DEBIT")
                 .amount(request.getAmount())
@@ -145,7 +145,6 @@ public class TransferService {
                 .status(TransactionStatus.COMPLETED.name())
                 .description("Transfer to account " + request.getDestinationAccountId() + 
                             (request.getDescription() != null ? " - " + request.getDescription() : ""))
-                .relatedTransactionId(null) // Will be set by credit log
                 .build();
 
         debitLog = transactionLogRepository.save(debitLog);
@@ -154,13 +153,13 @@ public class TransferService {
         // Step 8: Log credit transaction
         // Credit and debit are linked through:
         // 1. Same idempotency key (allows finding the transfer pair)
-        // 2. Credit's relatedTransactionId points to debit
-        // 3. Both reference the same amounts and accounts
+        // 2. Both reference the same amounts and accounts
         BigDecimal balanceBeforeCredit = destinationAccount.getBalance().subtract(request.getAmount());
         BigDecimal balanceAfterCredit = destinationAccount.getBalance();
 
         TransactionLog creditLog = TransactionLog.builder()
-                .accountId(destinationAccount.getId())
+            .fromAccountId(destinationAccount.getId())
+            .toAccountId(sourceAccount.getId())
                 .idempotencyKey(request.getIdempotencyKey()) // Same key for related transactions
                 .transactionType("CREDIT")
                 .amount(request.getAmount())
@@ -169,7 +168,6 @@ public class TransferService {
                 .status(TransactionStatus.COMPLETED.name())
                 .description("Transfer from account " + request.getSourceAccountId() + 
                             (request.getDescription() != null ? " - " + request.getDescription() : ""))
-                .relatedTransactionId(debitLog.getId()) // Link to debit transaction
                 .build();
 
         creditLog = transactionLogRepository.save(creditLog);
@@ -246,6 +244,6 @@ public class TransferService {
      */
     public java.util.List<TransactionLog> getAccountTransactionHistory(Long accountId) {
         log.debug("Retrieving transaction history for account: {}", accountId);
-        return transactionLogRepository.findByAccountIdOrderByCreatedAtDesc(accountId);
+        return transactionLogRepository.findByFromAccountIdOrderByCreatedAtDesc(accountId);
     }
 }

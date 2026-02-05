@@ -62,7 +62,7 @@ public class AccountService {
         }
 
         log.debug("Retrieving transaction history for account: {}", accountId);
-        List<TransactionLog> logs = transactionLogRepository.findByAccountIdOrderByCreatedAtDesc(accountId);
+        List<TransactionLog> logs = transactionLogRepository.findByFromAccountIdOrderByCreatedAtDesc(accountId);
         return logs.stream()
                 .map(this::toTransactionLogResponse)
                 .collect(Collectors.toList());
@@ -94,7 +94,7 @@ public class AccountService {
     private TransactionLogResponse toTransactionLogResponse(TransactionLog logEntry) {
         return TransactionLogResponse.builder()
                 .id(logEntry.getId())
-                .accountId(logEntry.getAccountId())
+                .fromAccountId(logEntry.getFromAccountId())
                 .idempotencyKey(logEntry.getIdempotencyKey())
                 .transactionType(logEntry.getTransactionType())
                 .amount(logEntry.getAmount())
@@ -102,7 +102,7 @@ public class AccountService {
                 .balanceAfter(logEntry.getBalanceAfter())
                 .status(logEntry.getStatus())
                 .description(logEntry.getDescription())
-                .relatedTransactionId(logEntry.getRelatedTransactionId())
+                .toAccountId(logEntry.getToAccountId())
                 .createdAt(logEntry.getCreatedAt())
                 .build();
     }
