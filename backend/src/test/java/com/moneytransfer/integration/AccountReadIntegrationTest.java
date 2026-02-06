@@ -2,10 +2,13 @@ package com.moneytransfer.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moneytransfer.domain.entity.Account;
+import com.moneytransfer.domain.entity.User;
+import com.moneytransfer.domain.entity.UserRole;
 import com.moneytransfer.domain.status.AccountStatus;
 import com.moneytransfer.dto.request.TransferRequest;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionLogRepository;
+import com.moneytransfer.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -69,15 +72,30 @@ class AccountReadIntegrationTest {
     @Autowired
     private TransactionLogRepository transactionLogRepository;
 
+        @Autowired
+        private UserRepository userRepository;
+
+        private User testUser;
+
     @BeforeEach
     void setUp() {
         transactionLogRepository.deleteAll();
         accountRepository.deleteAll();
+
+        testUser = userRepository.findByUsername("testuser")
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .username("testuser")
+                        .password("password")
+                        .email("testuser@example.com")
+                        .fullName("Test User")
+                        .role(UserRole.USER)
+                        .enabled(true)
+                        .build()));
     }
 
     @Test
     @DisplayName("✅ GET /accounts/{id}/balance returns current balance")
-    @WithMockUser
+        @WithMockUser(username = "testuser", roles = "USER")
     void getAccountBalanceReturnsCurrentBalance() throws Exception {
         Account account = accountRepository.save(Account.builder()
                 .accountNumber("ACC100")
@@ -85,6 +103,7 @@ class AccountReadIntegrationTest {
                 .balance(new BigDecimal("1000.00"))
                 .accountType("CHECKING")
                 .status(AccountStatus.ACTIVE.name())
+                                .owner(testUser)
                 .build());
 
         mockMvc.perform(get("/accounts/{accountId}/balance", account.getId()))
@@ -96,7 +115,7 @@ class AccountReadIntegrationTest {
 
     @Test
     @DisplayName("✅ GET /accounts/{id}/transactions returns transaction history")
-    @WithMockUser
+        @WithMockUser(username = "testuser", roles = "USER")
     void getAccountTransactionHistoryReturnsTransactions() throws Exception {
         Account source = accountRepository.save(Account.builder()
                 .accountNumber("SRC001")
@@ -104,6 +123,7 @@ class AccountReadIntegrationTest {
                 .balance(new BigDecimal("500.00"))
                 .accountType("SAVINGS")
                 .status(AccountStatus.ACTIVE.name())
+                                .owner(testUser)
                 .build());
 
         Account destination = accountRepository.save(Account.builder()

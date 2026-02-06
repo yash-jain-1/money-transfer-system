@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
  * 
  * Uses optimistic locking (@Version) to prevent lost updates during concurrent transactions.
  * All balance mutations go through debit() and credit() methods to enforce business rules.
+ * Each account is owned by a User (many-to-one relationship).
  */
 @Entity
 @Table(name = "accounts")
@@ -32,6 +33,15 @@ public class Account {
 
     @Column(nullable = false)
     private String accountHolder;
+
+    /**
+     * The user who owns this account.
+     * Many accounts can belong to one user.
+     * Uses lazy loading to avoid loading user data when not needed.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true) // nullable for backward compatibility with existing data
+    private User owner;
 
     @Column(nullable = false)
     private BigDecimal balance;

@@ -46,6 +46,7 @@ public class TransferService {
 
     private final AccountRepository accountRepository;
     private final TransactionLogRepository transactionLogRepository;
+    private final OwnershipService ownershipService;
 
     /**
      * Execute a money transfer between two accounts.
@@ -80,6 +81,13 @@ public class TransferService {
         log.info("Initiating transfer - Source: {}, Destination: {}, Amount: {}, Idempotency: {}",
                 request.getSourceAccountId(), request.getDestinationAccountId(),
                 request.getAmount(), request.getIdempotencyKey());
+
+        // Step 0: Validate ownership - user must own the source account
+        // Admins bypass this check automatically
+        ownershipService.validateTransferOwnership(
+            request.getSourceAccountId(), 
+            request.getDestinationAccountId()
+        );
 
         // Step 1: Check idempotency - Exactly-once processing
         var existingTransaction = transactionLogRepository.findByIdempotencyKey(request.getIdempotencyKey());

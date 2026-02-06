@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
  * AccountService: Read-only operations for account data.
  * 
  * Methods for USER role:
- * - Regular methods perform ownership checks (future enhancement)
+ * - Regular methods perform ownership checks
  * - Users can only access their own account data
  * 
  * Methods for ADMIN role:
@@ -34,38 +34,53 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
     private final TransactionLogRepository transactionLogRepository;
+    private final OwnershipService ownershipService;
 
     /**
      * Get account details by ID.
+     * Validates user ownership before returning data.
      *
      * @param accountId account ID
      * @return AccountResponse
      */
     public AccountResponse getAccountById(Long accountId) {
+        // Validate ownership (admins bypass this check)
+        ownershipService.validateAccountOwnership(accountId);
+        
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
+        log.debug("User accessed their account: {}", accountId);
         return toAccountResponse(account);
     }
 
     /**
      * Get account balance by ID.
+     * Validates user ownership before returning balance.
      *
      * @param accountId account ID
      * @return AccountBalanceResponse
      */
     public AccountBalanceResponse getAccountBalance(Long accountId) {
+        // Validate ownership (admins bypass this check)
+        ownershipService.validateAccountOwnership(accountId);
+        
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AccountNotFoundException(accountId));
+        log.debug("User accessed their account balance: {}", accountId);
         return toAccountBalanceResponse(account);
     }
 
     /**
      * Get transaction history for an account.
+     * Validates user ownership before returning history.
      *
      * @param accountId account ID
      * @return list of transaction logs
      */
     public List<TransactionLogResponse> getAccountTransactionHistory(Long accountId) {
+        // Validate ownership (admins bypass this check)
+        ownershipService.validateAccountOwnership(accountId);
+        
         if (!accountRepository.existsById(accountId)) {
             throw new AccountNotFoundException(accountId);
         }

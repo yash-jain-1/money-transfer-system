@@ -4,6 +4,7 @@ import com.moneytransfer.domain.exception.AccountNotFoundException;
 import com.moneytransfer.domain.exception.AccountNotActiveException;
 import com.moneytransfer.domain.exception.InsufficientBalanceException;
 import com.moneytransfer.domain.exception.DuplicateTransferException;
+import com.moneytransfer.domain.exception.UnauthorizedAccessException;
 import com.moneytransfer.dto.response.ErrorResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -99,6 +100,44 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .build();
         
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    /**
+     * Handles UnauthorizedAccessException when user tries to access resources they don't own.
+     */
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedAccess(
+            UnauthorizedAccessException ex,
+            WebRequest request) {
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(HttpStatus.FORBIDDEN.value())
+                .message(ex.getMessage())
+                .error("Unauthorized Access")
+                .timestamp(LocalDateTime.now())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Handles IllegalArgumentException for business logic validation errors.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            WebRequest request) {
+        
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .message(ex.getMessage())
+                .error("Invalid Request")
+                .timestamp(LocalDateTime.now())
+                .path(request.getDescription(false).replace("uri=", ""))
+                .build();
+        
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
     /**

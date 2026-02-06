@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -182,6 +183,9 @@ class TransferServiceTest {
     @Mock
     private TransactionLogRepository transactionLogRepository;
 
+        @Mock
+        private OwnershipService ownershipService;
+
     @InjectMocks
     private TransferService transferService;
 
@@ -220,6 +224,10 @@ class TransferServiceTest {
 
         lenient().when(transactionLogRepository.findByIdempotencyKey(anyString()))
                 .thenReturn(Optional.empty());
+
+        lenient().doNothing()
+                .when(ownershipService)
+                .validateTransferOwnership(anyLong(), anyLong());
     }
 
     // ========================================

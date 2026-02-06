@@ -3,11 +3,14 @@ package com.moneytransfer.integration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.moneytransfer.config.SecurityUserProperties;
 import com.moneytransfer.domain.entity.Account;
+import com.moneytransfer.domain.entity.User;
+import com.moneytransfer.domain.entity.UserRole;
 import com.moneytransfer.domain.status.AccountStatus;
 import com.moneytransfer.dto.request.LoginRequest;
 import com.moneytransfer.dto.request.TransferRequest;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionLogRepository;
+import com.moneytransfer.repository.UserRepository;
 import com.moneytransfer.util.JwtUtil;
 import io.github.bucket4j.Bucket;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -57,6 +61,12 @@ class RateLimitingIntegrationTest {
     private TransactionLogRepository transactionLogRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
     // @Autowired
@@ -68,6 +78,8 @@ class RateLimitingIntegrationTest {
     private Long account1Id;
     private Long account2Id;
     private Long account3Id;
+
+    private User testUser;
 
     private static final String AUTH_ENDPOINT = "/auth/login";
     private static final String TRANSFER_ENDPOINT = "/transfers";
@@ -81,6 +93,18 @@ class RateLimitingIntegrationTest {
         transactionLogRepository.deleteAll();
         accountRepository.deleteAll();
 
+        String username = securityUserProperties.getUsername();
+        String password = securityUserProperties.getPassword();
+        testUser = userRepository.findByUsername(username)
+            .orElseGet(() -> userRepository.save(User.builder()
+                .username(username)
+                .password(passwordEncoder.encode(password))
+                .email(username + "@example.com")
+                .fullName("Rate Limit Test User")
+                .role(UserRole.USER)
+                .enabled(true)
+                .build()));
+
         // Use timestamp for unique account numbers
         long timestamp = System.currentTimeMillis();
 
@@ -91,6 +115,7 @@ class RateLimitingIntegrationTest {
                 .balance(new BigDecimal("5000.00"))
                 .accountType("CHECKING")
                 .status(AccountStatus.ACTIVE.name())
+            .owner(testUser)
                 .build();
         Account savedAccount1 = accountRepository.save(account1);
         account1Id = savedAccount1.getId();
@@ -101,6 +126,7 @@ class RateLimitingIntegrationTest {
                 .balance(new BigDecimal("5000.00"))
                 .accountType("CHECKING")
                 .status(AccountStatus.ACTIVE.name())
+            .owner(testUser)
                 .build();
         Account savedAccount2 = accountRepository.save(account2);
         account2Id = savedAccount2.getId();
@@ -111,6 +137,7 @@ class RateLimitingIntegrationTest {
                 .balance(new BigDecimal("5000.00"))
                 .accountType("CHECKING")
                 .status(AccountStatus.ACTIVE.name())
+            .owner(testUser)
                 .build();
         Account savedAccount3 = accountRepository.save(account3);
         account3Id = savedAccount3.getId();

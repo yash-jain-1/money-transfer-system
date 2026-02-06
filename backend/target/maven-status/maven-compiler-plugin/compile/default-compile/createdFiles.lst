@@ -38,6 +38,7 @@ com/moneytransfer/repository/TransactionLogRepository.class
 com/moneytransfer/config/JpaConfig.class
 com/moneytransfer/security/JwtAuthenticationFilter.class
 com/moneytransfer/config/JwtProperties.class
+com/moneytransfer/domain/exception/UnauthorizedAccessException.class
 com/moneytransfer/dto/response/ErrorResponse$ErrorResponseBuilder.class
 com/moneytransfer/repository/AccountRepository.class
 com/moneytransfer/dto/request/LoginRequest.class

@@ -2,9 +2,12 @@ package com.moneytransfer.integration;
 
 import com.moneytransfer.Application;
 import com.moneytransfer.domain.entity.Account;
+import com.moneytransfer.domain.entity.User;
+import com.moneytransfer.domain.entity.UserRole;
 import com.moneytransfer.domain.status.AccountStatus;
 import com.moneytransfer.repository.AccountRepository;
 import com.moneytransfer.repository.TransactionLogRepository;
+import com.moneytransfer.repository.UserRepository;
 import com.moneytransfer.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -59,6 +62,9 @@ public class SecurityRoleIntegrationTest {
     @Autowired
     private TransactionLogRepository transactionLogRepository;
 
+        @Autowired
+        private UserRepository userRepository;
+
     // Test account IDs (set up in @BeforeEach)
     private Long ACCOUNT_1;
     private Long ACCOUNT_2;
@@ -68,6 +74,16 @@ public class SecurityRoleIntegrationTest {
         // Clean up any existing test data - delete transaction logs first due to FK constraints
         transactionLogRepository.deleteAll();
         accountRepository.deleteAll();
+
+        User testUser = userRepository.findByUsername("testuser")
+                .orElseGet(() -> userRepository.save(User.builder()
+                        .username("testuser")
+                        .password("password")
+                        .email("testuser@example.com")
+                        .fullName("Test User")
+                        .role(UserRole.USER)
+                        .enabled(true)
+                        .build()));
         
         // Create test account 1
         Account account1 = Account.builder()
@@ -76,6 +92,7 @@ public class SecurityRoleIntegrationTest {
                 .balance(new BigDecimal("5000.00"))
                 .accountType("CHECKING")
                 .status(AccountStatus.ACTIVE.name())
+                .owner(testUser)
                 .build();
         Account savedAccount1 = accountRepository.save(account1);
         ACCOUNT_1 = savedAccount1.getId();
